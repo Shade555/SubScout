@@ -5,13 +5,13 @@
 You need to add your Resend API key to Supabase Edge Functions:
 
 1. **Go to your Supabase Dashboard:**
-   - Visit: https://qjulzbbwfdqwrybkhpoj.supabase.co/project/qjulzbbwfdqwrybkhpoj/settings/functions
+   - Visit: https://YOUR_PROJECT_REF.supabase.co/project/YOUR_PROJECT_REF/settings/functions
 
 2. **Add Environment Variables:**
    - Click on "Environment Variables" or "Secrets"
    - Add these variables:
    ```
-   RESEND_API_KEY = re_h64eVn47_NBKh3CjYCn6HjUbEubNDfadi
+   RESEND_API_KEY = your_resend_api_key_here
    SITE_URL = http://localhost:5173
    ```
 
@@ -26,8 +26,8 @@ npm install -g supabase
 # Login to Supabase
 supabase login
 
-# Link your project
-supabase link --project-ref qjulzbbwfdqwrybkhpoj
+# Link your project (replace with your project ref)
+supabase link --project-ref YOUR_PROJECT_REF
 
 # Deploy the function
 supabase functions deploy send-notification-email
@@ -57,7 +57,7 @@ For production, you should set up a custom domain with Resend:
 ### If emails aren't sending:
 
 1. **Check Supabase Logs:**
-   - Go to: https://qjulzbbwfdqwrybkhpoj.supabase.co/project/qjulzbbwfdqwrybkhpoj/logs/edge-functions
+   - Go to: https://YOUR_PROJECT_REF.supabase.co/project/YOUR_PROJECT_REF/logs/edge-functions
    - Look for errors in the `send-notification-email` function
 
 2. **Check Resend Dashboard:**

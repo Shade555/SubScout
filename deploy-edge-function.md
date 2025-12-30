@@ -22,15 +22,15 @@ supabase functions deploy send-notification-email
 
 ## Step 2: Test Simple Function First
 
-1. **Go to:** https://qjulzbbwfdqwrybkhpoj.supabase.co/project/qjulzbbwfdqwrybkhpoj/functions
+1. **Go to:** https://YOUR_PROJECT_REF.supabase.co/project/YOUR_PROJECT_REF/functions
 2. **Verify both functions are listed:**
    - `test-simple`
    - `send-notification-email`
 
 3. **Test the simple function first:**
    ```bash
-   curl -X POST 'https://qjulzbbwfdqwrybkhpoj.supabase.co/functions/v1/test-simple' \
-     -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdWx6YmJ3ZmRxd3J5YmtocG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMzA2NzgsImV4cCI6MjA4MjYwNjY3OH0.ITiRRA5xHD9Yu-alY8HL90LFAQMupMh1hTg5JRz11E8' \
+   curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/test-simple' \
+     -H 'Authorization: Bearer YOUR_SUPABASE_ANON_KEY' \
      -H 'Content-Type: application/json'
    ```
 
@@ -42,16 +42,16 @@ supabase functions deploy send-notification-email
 ## Step 3: Check Function URLs
 
 Make sure you're using the correct URLs:
-- **Simple test:** `https://qjulzbbwfdqwrybkhpoj.supabase.co/functions/v1/test-simple`
-- **Email function:** `https://qjulzbbwfdqwrybkhpoj.supabase.co/functions/v1/send-notification-email`
+- **Simple test:** `https://YOUR_PROJECT_REF.supabase.co/functions/v1/test-simple`
+- **Email function:** `https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-notification-email`
 
 ## Step 4: Verify Environment Variables
 
-**Go to:** https://qjulzbbwfdqwrybkhpoj.supabase.co/project/qjulzbbwfdqwrybkhpoj/settings/functions
+**Go to:** https://YOUR_PROJECT_REF.supabase.co/project/YOUR_PROJECT_REF/settings/functions
 
 **Add these environment variables:**
 ```
-RESEND_API_KEY = re_h64eVn47_NBKh3CjYCn6HjUbEubNDfadi
+RESEND_API_KEY = your_resend_api_key_here
 SITE_URL = http://localhost:5173
 ```
 
@@ -65,8 +65,8 @@ supabase functions deploy send-notification-email
 The updated email function has step-by-step logging. Test it:
 
 ```bash
-curl -X POST 'https://qjulzbbwfdqwrybkhpoj.supabase.co/functions/v1/send-notification-email' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqdWx6YmJ3ZmRxd3J5YmtocG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMzA2NzgsImV4cCI6MjA4MjYwNjY3OH0.ITiRRA5xHD9Yu-alY8HL90LFAQMupMh1hTg5JRz11E8' \
+curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-notification-email' \
+  -H 'Authorization: Bearer YOUR_SUPABASE_ANON_KEY' \
   -H 'Content-Type: application/json' \
   -d '{
     "to": "test@example.com",
@@ -106,7 +106,7 @@ You should see logs like:
 **Solution:** 
 ```bash
 supabase login
-supabase link --project-ref qjulzbbwfdqwrybkhpoj
+supabase link --project-ref YOUR_PROJECT_REF
 ```
 
 ### Issue 5: Function Crashes Immediately
@@ -143,7 +143,7 @@ Use the enhanced `test-supabase-function.html`:
 
 If still no logs after following these steps:
 
-1. **Verify project ID:** qjulzbbwfdqwrybkhpoj
+1. **Verify project ID:** YOUR_PROJECT_REF
 2. **Check Supabase status:** https://status.supabase.com/
 3. **Try different browser/incognito mode**
 4. **Check firewall/proxy settings**
@@ -153,7 +153,7 @@ If still no logs after following these steps:
 ```bash
 # Full deployment sequence
 supabase login
-supabase link --project-ref qjulzbbwfdqwrybkhpoj
+supabase link --project-ref YOUR_PROJECT_REF
 supabase functions deploy test-simple
 supabase functions deploy send-notification-email
 
@@ -167,7 +167,7 @@ When working correctly, you should see logs like:
 ```
 EMAIL FUNCTION START
 Method: POST
-URL: https://qjulzbbwfdqwrybkhpoj.supabase.co/functions/v1/send-notification-email
+URL: https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-notification-email
 Step 1: Reading request body...
 Raw body length: 234
 Step 2: Parsing JSON...

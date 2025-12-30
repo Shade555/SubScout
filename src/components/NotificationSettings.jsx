@@ -220,9 +220,9 @@ export default function NotificationSettings() {
       let errorMessage = error.message
       
       if (errorMessage.includes('not found') || errorMessage.includes('Failed to send a request')) {
-        errorMessage = `❌ Edge Function not deployed yet!\n\nPlease follow these steps:\n1. Install Supabase CLI: npm install -g supabase\n2. Login: supabase login\n3. Link project: supabase link --project-ref qjulzbbwfdqwrybkhpoj\n4. Deploy function: supabase functions deploy send-notification-email\n\nSee deploy-edge-function.md for detailed instructions.`
+        errorMessage = `❌ Edge Function not deployed yet!\n\nPlease follow these steps:\n1. Install Supabase CLI: npm install -g supabase\n2. Login: supabase login\n3. Link project: supabase link --project-ref YOUR_PROJECT_REF\n4. Deploy function: supabase functions deploy send-notification-email\n\nSee deploy-edge-function.md for detailed instructions.`
       } else if (errorMessage.includes('RESEND_API_KEY')) {
-        errorMessage = `❌ Resend API key not configured!\n\nPlease add RESEND_API_KEY to your Supabase environment variables:\n1. Go to Supabase Dashboard > Functions > Environment Variables\n2. Add: RESEND_API_KEY = re_h64eVn47_NBKh3CjYCn6HjUbEubNDfadi`
+        errorMessage = `❌ Resend API key not configured!\n\nPlease add RESEND_API_KEY to your Supabase environment variables:\n1. Go to Supabase Dashboard > Functions > Environment Variables\n2. Add: RESEND_API_KEY = your_resend_api_key_here`
       }
       
       setError(errorMessage)

@@ -5,7 +5,7 @@ The notification toggles aren't being saved because the database tables don't ex
 ## Step 1: Run SQL Setup in Supabase
 
 1. Go to your Supabase SQL Editor:
-   https://qjulzbbwfdqwrybkhpoj.supabase.co/project/qjulzbbwfdqwrybkhpoj/sql
+   https://YOUR_PROJECT_REF.supabase.co/project/YOUR_PROJECT_REF/sql
 
 2. Copy the entire contents of `supabase-notifications-setup.sql` file
 
