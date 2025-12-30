@@ -1,6 +1,6 @@
 import './SubscriptionCard.css'
 
-export default function SubscriptionCard({ subscription, onCancel, onReactivate, showActions = true }) {
+export default function SubscriptionCard({ subscription, onCancel, onReactivate, onMarkPaid, onEdit, onRemove, showActions = true }) {
   const formatAmount = (amount, currency) => {
     const symbols = {
       USD: '$',
@@ -124,19 +124,52 @@ export default function SubscriptionCard({ subscription, onCancel, onReactivate,
       {showActions && (
         <div className="card-actions">
           {subscription.is_active ? (
-            <button 
-              onClick={() => onCancel(subscription.id)}
-              className="cancel-btn"
-            >
-              Cancel
-            </button>
+            <>
+              <button 
+                onClick={() => onMarkPaid(subscription)}
+                className="paid-btn"
+                title="Mark payment as completed"
+              >
+                ✓ Paid
+              </button>
+              <button 
+                onClick={() => onEdit(subscription)}
+                className="edit-btn"
+                title="Edit subscription details"
+              >
+                ✏️ Edit
+              </button>
+              <button 
+                onClick={() => onCancel(subscription.id)}
+                className="cancel-btn"
+                title="Cancel subscription (keeps in history)"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => onRemove(subscription.id)}
+                className="remove-btn"
+                title="Permanently delete subscription"
+              >
+                🗑️ Remove
+              </button>
+            </>
           ) : (
-            <button 
-              onClick={() => onReactivate(subscription.id)}
-              className="reactivate-btn"
-            >
-              Reactivate
-            </button>
+            <>
+              <button 
+                onClick={() => onReactivate(subscription.id)}
+                className="reactivate-btn"
+              >
+                Reactivate
+              </button>
+              <button 
+                onClick={() => onRemove(subscription.id)}
+                className="remove-btn"
+                title="Permanently delete subscription"
+              >
+                🗑️ Remove
+              </button>
+            </>
           )}
         </div>
       )}

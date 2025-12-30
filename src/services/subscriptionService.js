@@ -110,6 +110,46 @@ export const subscriptionService = {
     if (error) throw error
   },
 
+  // Mark payment as completed and update next payment date
+  async markPaymentCompleted(subscription) {
+    const nextPaymentDate = this.calculateNextPaymentDate(
+      subscription.next_payment_date,
+      subscription.billing_cycle
+    )
+
+    // For now, just update the next payment date
+    // We'll add last_payment_date after running the SQL migration
+    return this.updateSubscription(subscription.id, {
+      next_payment_date: nextPaymentDate
+    })
+  },
+
+  // Update subscription details
+  async editSubscription(id, subscriptionData) {
+    // If billing cycle or start date changed, recalculate next payment
+    if (subscriptionData.billing_cycle || subscriptionData.start_date) {
+      const currentSub = await this.getSubscriptionById(id)
+      const baseDate = subscriptionData.start_date || currentSub.next_payment_date
+      const cycle = subscriptionData.billing_cycle || currentSub.billing_cycle
+      
+      subscriptionData.next_payment_date = this.calculateNextPaymentDate(baseDate, cycle)
+    }
+
+    return this.updateSubscription(id, subscriptionData)
+  },
+
+  // Get single subscription by ID
+  async getSubscriptionById(id) {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('id', id)
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
   // Calculate next payment date
   calculateNextPaymentDate(startDate, billingCycle) {
     const date = new Date(startDate)
@@ -146,6 +186,21 @@ export const subscriptionService = {
       .eq('is_active', true)
       .gte('next_payment_date', today.toISOString().split('T')[0])
       .lte('next_payment_date', thirtyDaysFromNow.toISOString().split('T')[0])
+      .order('next_payment_date', { ascending: true })
+    
+    if (error) throw error
+    return data
+  },
+
+  // Get overdue payments
+  async getOverduePayments() {
+    const today = new Date()
+
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('is_active', true)
+      .lt('next_payment_date', today.toISOString().split('T')[0])
       .order('next_payment_date', { ascending: true })
     
     if (error) throw error

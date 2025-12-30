@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import FallingLogos from './FallingLogos'
+import MobileFallingLogos from './MobileFallingLogos'
 import './Auth.css'
 
 export default function Auth() {
@@ -51,11 +52,14 @@ export default function Auth() {
     }
   }
 
-
-
   return (
     <div className="auth-container">
       <div className="auth-left">
+        {/* Mobile falling logos background */}
+        <div className="mobile-logos-background">
+          <MobileFallingLogos />
+        </div>
+        
         <div className="auth-card">
           <div className="auth-header">
             <h1>SubScout</h1>

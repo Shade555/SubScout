@@ -88,7 +88,11 @@ export const notificationService = {
   async sendEmailNotification(subscription, daysUntil) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+
+      console.log('Sending email notification to:', user.email)
 
       const { data, error } = await supabase.functions.invoke('send-notification-email', {
         body: {
@@ -98,10 +102,67 @@ export const notificationService = {
         }
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase function error:', error)
+        throw error
+      }
+
+      console.log('Email sent successfully:', data)
       return data
     } catch (error) {
       console.error('Error sending email notification:', error)
+      throw error
+    }
+  },
+
+  // Send test email notification with better debugging
+  async sendTestEmail() {
+    try {
+      // First check if the function exists
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+
+      console.log('User authenticated:', user.email)
+      console.log('Testing edge function...')
+
+      const testSubscription = {
+        name: 'Netflix Premium',
+        amount: 15.99,
+        currency: 'USD',
+        billing_cycle: 'monthly',
+        next_payment_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        description: 'Premium streaming service with 4K content'
+      }
+
+      console.log('Calling edge function with data:', {
+        to: user.email,
+        subscription: testSubscription,
+        daysUntil: 1
+      })
+
+      const { data, error } = await supabase.functions.invoke('send-notification-email', {
+        body: {
+          to: user.email,
+          subscription: testSubscription,
+          daysUntil: 1
+        }
+      })
+
+      console.log('Edge function response:', { data, error })
+
+      if (error) {
+        console.error('Edge function error details:', error)
+        throw new Error(`Edge function error: ${JSON.stringify(error)}`)
+      }
+
+      console.log('Test email sent successfully:', data)
+      return data
+
+    } catch (error) {
+      console.error('Test email failed:', error)
+      throw error
     }
   },
 

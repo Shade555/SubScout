@@ -129,13 +129,88 @@
   box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
 }
 
+.stats-header {
+  max-width: 1200px;
+  margin: 2rem auto 1rem auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stats-header h2 {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.currency-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.currency-selector label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.currency-select {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.currency-select:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.currency-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.currency-select option {
+  background: #1a1a2e;
+  color: white;
+}
+
 .stats-grid {
   max-width: 1200px;
-  margin: 2rem auto;
+  margin: 0 auto 2rem auto;
   padding: 0 2rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
+}
+
+/* Center the overdue card when it's alone on the last row */
+.stats-grid {
+  justify-items: center;
+}
+
+.stat-card {
+  width: 100%;
+  max-width: 300px;
+}
+
+.stat-card.overdue-card {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
 .stat-card {
@@ -159,6 +234,15 @@
   font-size: 0.9rem;
 }
 
+.overdue-card {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.overdue-value {
+  color: #ef4444 !important;
+}
+
 .tabs {
   max-width: 1200px;
   margin: 2rem auto 0;
@@ -166,6 +250,13 @@
   display: flex;
   gap: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .tab {
@@ -177,11 +268,13 @@
   border-bottom: 2px solid transparent;
   transition: all 0.3s ease;
   font-weight: 500;
-  outline: none; /* Remove focus outline */
+  outline: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab:focus {
-  outline: none; /* Ensure no focus outline */
+  outline: none;
 }
 
 .tab:hover {
@@ -191,6 +284,20 @@
 .tab.active {
   color: #667eea;
   border-bottom-color: #667eea;
+}
+
+.overdue-tab {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
+
+.overdue-tab.active {
+  color: #ef4444 !important;
+  border-bottom-color: #ef4444;
+}
+
+.overdue-tab:hover {
+  color: #f87171 !important;
 }
 
 .subscriptions-container {
@@ -320,15 +427,61 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .dashboard-header {
+    padding: 1rem;
+  }
+
   .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .header-left {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .header-text {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-email {
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .add-subscription-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .logo h1 {
+    font-size: 1.5rem;
+  }
+
+  .stats-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 1rem;
+  }
+
+  .currency-selector {
+    justify-content: center;
   }
 
   .stats-grid {
@@ -339,7 +492,14 @@
 
   .tabs {
     padding: 0 1rem;
-    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem auto 0;
+  }
+
+  .tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    min-width: fit-content;
   }
 
   .subscriptions-container {

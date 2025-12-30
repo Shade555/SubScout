@@ -290,21 +290,113 @@
   color: #764ba2;
 }
 
+.mobile-logos-background {
+  display: none;
+}
+
+.mobile-logo-canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto; /* Enable touch events */
+  z-index: 1;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .auth-container {
-    flex-direction: column;
+    flex-direction: row; /* Keep as single column on mobile */
   }
   
+  /* Hide the right side completely on mobile */
   .auth-right {
-    height: 40vh;
+    display: none;
   }
   
   .auth-left {
+    flex: 1;
+    width: 100%;
     padding: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Show mobile falling logos background */
+  .mobile-logos-background {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: auto; /* Allow touch interactions */
   }
   
   .auth-card {
-    padding: 2rem;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 10; /* Higher z-index to be above canvas */
+    background: rgba(26, 26, 46, 0.95); /* Less transparent, more solid */
+    backdrop-filter: blur(3px); /* Much less blur */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    pointer-events: auto; /* Ensure form interactions work */
+  }
+  
+  .auth-header h1 {
+    font-size: 2rem;
+  }
+  
+  /* Enhanced form styling for mobile */
+  .form-group input {
+    background: rgba(255, 255, 255, 0.12); /* Slightly more opaque */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(2px); /* Minimal blur */
+  }
+  
+  .form-group input:focus {
+    background: rgba(255, 255, 255, 0.18); /* More opaque when focused */
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2), 0 8px 25px rgba(102, 126, 234, 0.1);
+  }
+  
+  .auth-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  .auth-button:hover:not(:disabled) {
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+  
+  .google-button {
+    background: rgba(255, 255, 255, 0.12); /* Less transparent */
+    backdrop-filter: blur(2px); /* Minimal blur */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  
+  .google-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Message styling */
+  .message {
+    backdrop-filter: blur(2px); /* Minimal blur */
+    border-radius: 12px;
+  }
+  
+  .message.success {
+    background: rgba(34, 197, 94, 0.2); /* More opaque */
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1);
+  }
+  
+  .message.error {
+    background: rgba(239, 68, 68, 0.2); /* More opaque */
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1);
   }
 }

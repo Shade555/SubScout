@@ -210,20 +210,22 @@ export default function NotificationSettings() {
     setTestNotification(true)
     
     try {
-      // Create a mock subscription for testing
-      const testSubscription = {
-        name: 'Test Service',
-        amount: 9.99,
-        currency: 'USD',
-        billing_cycle: 'monthly'
-      }
-      
-      await notificationService.sendEmailNotification(testSubscription, 1)
+      await notificationService.sendTestEmail()
+      alert('✅ Test email sent successfully! Check your inbox (and spam folder).')
       
       setTimeout(() => setTestNotification(false), 2000)
     } catch (error) {
       console.error('Test email notification failed:', error)
-      setError('Failed to send test email notification. Make sure your email function is set up.')
+      
+      let errorMessage = error.message
+      
+      if (errorMessage.includes('not found') || errorMessage.includes('Failed to send a request')) {
+        errorMessage = `❌ Edge Function not deployed yet!\n\nPlease follow these steps:\n1. Install Supabase CLI: npm install -g supabase\n2. Login: supabase login\n3. Link project: supabase link --project-ref qjulzbbwfdqwrybkhpoj\n4. Deploy function: supabase functions deploy send-notification-email\n\nSee deploy-edge-function.md for detailed instructions.`
+      } else if (errorMessage.includes('RESEND_API_KEY')) {
+        errorMessage = `❌ Resend API key not configured!\n\nPlease add RESEND_API_KEY to your Supabase environment variables:\n1. Go to Supabase Dashboard > Functions > Environment Variables\n2. Add: RESEND_API_KEY = re_h64eVn47_NBKh3CjYCn6HjUbEubNDfadi`
+      }
+      
+      setError(errorMessage)
       setTestNotification(false)
     }
   }

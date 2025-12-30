@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { subscriptionService } from '../services/subscriptionService'
 import { notificationService } from '../services/notificationService'
+import { currencyService } from '../services/currencyService'
 import { supabase } from '../lib/supabase'
 import AddSubscriptionModal from './AddSubscriptionModal'
+import EditSubscriptionModal from './EditSubscriptionModal'
 import SubscriptionCard from './SubscriptionCard'
 import NotificationSettings from './NotificationSettings'
 import Sidebar from './Sidebar'
@@ -13,14 +15,18 @@ export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingSubscription, setEditingSubscription] = useState(null)
   const [showSidebar, setShowSidebar] = useState(false)
   const [currentPage, setCurrentPage] = useState('dashboard')
   const [user, setUser] = useState(null)
+  const [displayCurrency, setDisplayCurrency] = useState('USD')
   const [stats, setStats] = useState({
     totalActive: 0,
     monthlyTotal: 0,
     yearlyTotal: 0,
-    upcomingPayments: 0
+    upcomingPayments: 0,
+    overduePayments: 0
   })
 
   useEffect(() => {
@@ -34,6 +40,14 @@ export default function Dashboard() {
       loadSubscriptions()
     }
   }, [activeTab, user])
+
+  useEffect(() => {
+    // Recalculate stats when display currency changes
+    if (subscriptions.length > 0 && activeTab === 'active') {
+      const activeSubscriptions = subscriptions.filter(sub => sub.is_active)
+      calculateStats(activeSubscriptions)
+    }
+  }, [displayCurrency, subscriptions, activeTab])
 
   const initializeNotifications = async () => {
     // Request notification permission and start monitoring
@@ -75,6 +89,9 @@ export default function Dashboard() {
         case 'upcoming':
           data = await subscriptionService.getUpcomingPayments()
           break
+        case 'overdue':
+          data = await subscriptionService.getOverduePayments()
+          break
         default:
           data = await subscriptionService.getActiveSubscriptions()
       }
@@ -95,17 +112,21 @@ export default function Dashboard() {
   const calculateStats = (activeSubscriptions) => {
     const monthlyTotal = activeSubscriptions.reduce((total, sub) => {
       const amount = parseFloat(sub.amount)
+      
+      // Convert to display currency
+      const convertedAmount = currencyService.convert(amount, sub.currency, displayCurrency)
+      
       switch (sub.billing_cycle) {
         case 'weekly':
-          return total + (amount * 4.33) // Average weeks per month
+          return total + (convertedAmount * 4.33) // Average weeks per month
         case 'monthly':
-          return total + amount
+          return total + convertedAmount
         case 'quarterly':
-          return total + (amount / 3)
+          return total + (convertedAmount / 3)
         case 'yearly':
-          return total + (amount / 12)
+          return total + (convertedAmount / 12)
         default:
-          return total + amount
+          return total + convertedAmount
       }
     }, 0)
 
@@ -118,7 +139,12 @@ export default function Dashboard() {
         const today = new Date()
         const diffTime = nextPayment - today
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-        return diffDays <= 7
+        return diffDays <= 7 && diffDays >= 0
+      }).length,
+      overduePayments: activeSubscriptions.filter(sub => {
+        const nextPayment = new Date(sub.next_payment_date)
+        const today = new Date()
+        return nextPayment < today
       }).length
     })
   }
@@ -169,6 +195,49 @@ export default function Dashboard() {
     }
   }
 
+  const handleMarkPaymentCompleted = async (subscription) => {
+    if (confirm(`Mark payment as completed for ${subscription.name}?`)) {
+      try {
+        await subscriptionService.markPaymentCompleted(subscription)
+        loadSubscriptions()
+        alert('Payment marked as completed! Next payment date updated.')
+      } catch (error) {
+        console.error('Error marking payment as completed:', error)
+        alert('Failed to mark payment as completed')
+      }
+    }
+  }
+
+  const handleEditSubscription = (subscription) => {
+    setEditingSubscription(subscription)
+    setShowEditModal(true)
+  }
+
+  const handleSaveEditedSubscription = async (id, subscriptionData) => {
+    try {
+      await subscriptionService.editSubscription(id, subscriptionData)
+      setShowEditModal(false)
+      setEditingSubscription(null)
+      loadSubscriptions()
+    } catch (error) {
+      console.error('Error updating subscription:', error)
+      throw error
+    }
+  }
+
+  const handleRemoveSubscription = async (id) => {
+    const subscription = subscriptions.find(sub => sub.id === id)
+    if (confirm(`Permanently delete "${subscription?.name}"? This action cannot be undone and will remove it from history.`)) {
+      try {
+        await subscriptionService.deleteSubscription(id)
+        loadSubscriptions()
+      } catch (error) {
+        console.error('Error removing subscription:', error)
+        alert('Failed to remove subscription')
+      }
+    }
+  }
+
   const renderCurrentPage = () => {
     if (currentPage === 'themes') {
       return (
@@ -216,22 +285,45 @@ export default function Dashboard() {
     return (
       <>
         {/* Stats Cards */}
+        <div className="stats-header">
+          <h2>Overview</h2>
+          <div className="currency-selector">
+            <label htmlFor="display-currency">Display in:</label>
+            <select 
+              id="display-currency"
+              value={displayCurrency}
+              onChange={(e) => setDisplayCurrency(e.target.value)}
+              className="currency-select"
+            >
+              {currencyService.getAvailableCurrencies().map(currency => (
+                <option key={currency.code} value={currency.code}>
+                  {currency.symbol} {currency.code} - {currency.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-value">{stats.totalActive}</div>
             <div className="stat-label">Active Subscriptions</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">${stats.monthlyTotal.toFixed(2)}</div>
+            <div className="stat-value">{currencyService.format(stats.monthlyTotal, displayCurrency)}</div>
             <div className="stat-label">Monthly Total</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">${stats.yearlyTotal.toFixed(2)}</div>
+            <div className="stat-value">{currencyService.format(stats.yearlyTotal, displayCurrency)}</div>
             <div className="stat-label">Yearly Total</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{stats.upcomingPayments}</div>
             <div className="stat-label">Due This Week</div>
+          </div>
+          <div className="stat-card overdue-card">
+            <div className="stat-value overdue-value">{stats.overduePayments}</div>
+            <div className="stat-label">Overdue Payments</div>
           </div>
         </div>
 
@@ -248,6 +340,12 @@ export default function Dashboard() {
             onClick={() => setActiveTab('upcoming')}
           >
             Upcoming Payments
+          </button>
+          <button 
+            className={`tab ${activeTab === 'overdue' ? 'active' : ''} ${stats.overduePayments > 0 ? 'overdue-tab' : ''}`}
+            onClick={() => setActiveTab('overdue')}
+          >
+            Overdue ({stats.overduePayments})
           </button>
           <button 
             className={`tab ${activeTab === 'history' ? 'active' : ''}`}
@@ -269,6 +367,8 @@ export default function Dashboard() {
                   ? 'Add your first subscription to get started!'
                   : activeTab === 'history'
                   ? 'No cancelled subscriptions yet.'
+                  : activeTab === 'overdue'
+                  ? 'No overdue payments. Great job staying on top of your subscriptions!'
                   : 'No upcoming payments in the next 30 days.'
                 }
               </p>
@@ -289,6 +389,9 @@ export default function Dashboard() {
                   subscription={subscription}
                   onCancel={handleCancelSubscription}
                   onReactivate={handleReactivateSubscription}
+                  onMarkPaid={handleMarkPaymentCompleted}
+                  onEdit={handleEditSubscription}
+                  onRemove={handleRemoveSubscription}
                   showActions={activeTab !== 'upcoming'}
                 />
               ))}
@@ -351,6 +454,18 @@ export default function Dashboard() {
         <AddSubscriptionModal
           onClose={() => setShowAddModal(false)}
           onAdd={handleAddSubscription}
+        />
+      )}
+
+      {/* Edit Subscription Modal */}
+      {showEditModal && (
+        <EditSubscriptionModal
+          subscription={editingSubscription}
+          onClose={() => {
+            setShowEditModal(false)
+            setEditingSubscription(null)
+          }}
+          onSave={handleSaveEditedSubscription}
         />
       )}
     </div>
