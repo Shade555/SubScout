@@ -1,34 +1,358 @@
-import { useAuth } from '../contexts/AuthContext'
+import { useState, useEffect } from 'react'
+import { subscriptionService } from '../services/subscriptionService'
+import { notificationService } from '../services/notificationService'
+import { supabase } from '../lib/supabase'
+import AddSubscriptionModal from './AddSubscriptionModal'
+import SubscriptionCard from './SubscriptionCard'
+import NotificationSettings from './NotificationSettings'
+import Sidebar from './Sidebar'
 import './Dashboard.css'
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth()
+  const [activeTab, setActiveTab] = useState('active')
+  const [subscriptions, setSubscriptions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showSidebar, setShowSidebar] = useState(false)
+  const [currentPage, setCurrentPage] = useState('dashboard')
+  const [user, setUser] = useState(null)
+  const [stats, setStats] = useState({
+    totalActive: 0,
+    monthlyTotal: 0,
+    yearlyTotal: 0,
+    upcomingPayments: 0
+  })
 
-  const handleSignOut = async () => {
-    await signOut()
+  useEffect(() => {
+    checkUser()
+    // Initialize notifications
+    initializeNotifications()
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      loadSubscriptions()
+    }
+  }, [activeTab, user])
+
+  const initializeNotifications = async () => {
+    // Request notification permission and start monitoring
+    const granted = await notificationService.requestNotificationPermission()
+    if (granted) {
+      notificationService.startNotificationMonitoring()
+    }
+    
+    // Register service worker for push notifications
+    await notificationService.registerServiceWorker()
+  }
+
+  const checkUser = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) {
+        console.error('Auth error:', error)
+        return
+      }
+      console.log('Current user:', user?.email)
+      setUser(user)
+    } catch (error) {
+      console.error('Error checking user:', error)
+    }
+  }
+
+  const loadSubscriptions = async () => {
+    try {
+      setLoading(true)
+      let data
+      
+      switch (activeTab) {
+        case 'active':
+          data = await subscriptionService.getActiveSubscriptions()
+          break
+        case 'history':
+          data = await subscriptionService.getCancelledSubscriptions()
+          break
+        case 'upcoming':
+          data = await subscriptionService.getUpcomingPayments()
+          break
+        default:
+          data = await subscriptionService.getActiveSubscriptions()
+      }
+      
+      setSubscriptions(data)
+      
+      // Calculate stats for active subscriptions
+      if (activeTab === 'active') {
+        calculateStats(data)
+      }
+    } catch (error) {
+      console.error('Error loading subscriptions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const calculateStats = (activeSubscriptions) => {
+    const monthlyTotal = activeSubscriptions.reduce((total, sub) => {
+      const amount = parseFloat(sub.amount)
+      switch (sub.billing_cycle) {
+        case 'weekly':
+          return total + (amount * 4.33) // Average weeks per month
+        case 'monthly':
+          return total + amount
+        case 'quarterly':
+          return total + (amount / 3)
+        case 'yearly':
+          return total + (amount / 12)
+        default:
+          return total + amount
+      }
+    }, 0)
+
+    setStats({
+      totalActive: activeSubscriptions.length,
+      monthlyTotal: monthlyTotal,
+      yearlyTotal: monthlyTotal * 12,
+      upcomingPayments: activeSubscriptions.filter(sub => {
+        const nextPayment = new Date(sub.next_payment_date)
+        const today = new Date()
+        const diffTime = nextPayment - today
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        return diffDays <= 7
+      }).length
+    })
+  }
+
+  const handleAddSubscription = async (subscriptionData) => {
+    try {
+      console.log('Attempting to add subscription:', subscriptionData)
+      const result = await subscriptionService.addSubscription(subscriptionData)
+      console.log('Subscription added successfully:', result)
+      setShowAddModal(false)
+      loadSubscriptions()
+    } catch (error) {
+      console.error('Error adding subscription:', error)
+      
+      // More specific error messages
+      let errorMessage = 'Failed to add subscription'
+      if (error.message?.includes('not authenticated')) {
+        errorMessage = 'Please log in to add subscriptions'
+      } else if (error.message?.includes('relation "subscriptions" does not exist')) {
+        errorMessage = 'Database not set up. Please run the SQL setup in Supabase.'
+      } else if (error.details) {
+        errorMessage = `Database error: ${error.details}`
+      }
+      
+      alert(errorMessage)
+    }
+  }
+
+  const handleCancelSubscription = async (id) => {
+    if (confirm('Are you sure you want to cancel this subscription?')) {
+      try {
+        await subscriptionService.cancelSubscription(id)
+        loadSubscriptions()
+      } catch (error) {
+        console.error('Error cancelling subscription:', error)
+        alert('Failed to cancel subscription')
+      }
+    }
+  }
+
+  const handleReactivateSubscription = async (id) => {
+    try {
+      await subscriptionService.reactivateSubscription(id)
+      loadSubscriptions()
+    } catch (error) {
+      console.error('Error reactivating subscription:', error)
+      alert('Failed to reactivate subscription')
+    }
+  }
+
+  const renderCurrentPage = () => {
+    if (currentPage === 'themes') {
+      return (
+        <div className="themes-page">
+          <div className="page-header">
+            <h1>Theme Settings</h1>
+            <p>Choose your preferred color scheme</p>
+          </div>
+          <div className="themes-grid">
+            {[
+              { id: 'dark', name: 'Dark Blue', colors: ['#0f0f23', '#1a1a2e'] },
+              { id: 'purple', name: 'Purple', colors: ['#1a0b2e', '#2d1b69'] },
+              { id: 'green', name: 'Forest', colors: ['#0d1b2a', '#1b4332'] },
+              { id: 'orange', name: 'Sunset', colors: ['#2d1b0b', '#8b4513'] }
+            ].map(theme => (
+              <div 
+                key={theme.id}
+                className="theme-card"
+                onClick={() => {
+                  document.documentElement.style.setProperty('--bg-primary', theme.colors[0])
+                  document.documentElement.style.setProperty('--bg-secondary', theme.colors[1])
+                  localStorage.setItem('subscout-theme', theme.id)
+                }}
+              >
+                <div 
+                  className="theme-preview-large"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.colors[0]}, ${theme.colors[1]})`
+                  }}
+                />
+                <h3>{theme.name}</h3>
+                <p>Click to apply</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    if (currentPage === 'notifications') {
+      return <NotificationSettings />
+    }
+
+    // Default dashboard content
+    return (
+      <>
+        {/* Stats Cards */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-value">{stats.totalActive}</div>
+            <div className="stat-label">Active Subscriptions</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">${stats.monthlyTotal.toFixed(2)}</div>
+            <div className="stat-label">Monthly Total</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">${stats.yearlyTotal.toFixed(2)}</div>
+            <div className="stat-label">Yearly Total</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{stats.upcomingPayments}</div>
+            <div className="stat-label">Due This Week</div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="tabs">
+          <button 
+            className={`tab ${activeTab === 'active' ? 'active' : ''}`}
+            onClick={() => setActiveTab('active')}
+          >
+            Active Subscriptions
+          </button>
+          <button 
+            className={`tab ${activeTab === 'upcoming' ? 'active' : ''}`}
+            onClick={() => setActiveTab('upcoming')}
+          >
+            Upcoming Payments
+          </button>
+          <button 
+            className={`tab ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            History
+          </button>
+        </div>
+
+        {/* Subscriptions List */}
+        <div className="subscriptions-container">
+          {loading ? (
+            <div className="loading">Loading subscriptions...</div>
+          ) : subscriptions.length === 0 ? (
+            <div className="empty-state">
+              <h3>No subscriptions found</h3>
+              <p>
+                {activeTab === 'active' 
+                  ? 'Add your first subscription to get started!'
+                  : activeTab === 'history'
+                  ? 'No cancelled subscriptions yet.'
+                  : 'No upcoming payments in the next 30 days.'
+                }
+              </p>
+              {activeTab === 'active' && (
+                <button 
+                  onClick={() => setShowAddModal(true)}
+                  className="add-first-btn"
+                >
+                  Add Your First Subscription
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="subscriptions-grid">
+              {subscriptions.map(subscription => (
+                <SubscriptionCard
+                  key={subscription.id}
+                  subscription={subscription}
+                  onCancel={handleCancelSubscription}
+                  onReactivate={handleReactivateSubscription}
+                  showActions={activeTab !== 'upcoming'}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </>
+    )
   }
 
   return (
     <div className="dashboard">
+      {/* Sidebar */}
+      {showSidebar && (
+        <Sidebar 
+          currentPage={currentPage}
+          onPageChange={(page) => {
+            setCurrentPage(page)
+            setShowSidebar(false)
+          }}
+          onClose={() => setShowSidebar(false)}
+        />
+      )}
+
       <header className="dashboard-header">
-        <h1>SubScout Dashboard</h1>
-        <div className="user-info">
-          <span>Welcome, {user?.email}</span>
-          <button onClick={handleSignOut} className="sign-out-btn">
-            Sign Out
-          </button>
+        <div className="header-content">
+          <div className="header-left">
+            <button 
+              className="sidebar-toggle-integrated"
+              onClick={() => setShowSidebar(true)}
+            >
+              ☰
+            </button>
+            <div className="header-text">
+              <h1>
+                {currentPage === 'dashboard' ? 'SubScout Dashboard' : 
+                 currentPage === 'themes' ? 'Theme Settings' : 
+                 currentPage === 'notifications' ? 'Notification Settings' : 'SubScout'}
+              </h1>
+              {user && currentPage === 'dashboard' && (
+                <span className="user-email">Welcome, {user.email}</span>
+              )}
+            </div>
+          </div>
+          {currentPage === 'dashboard' && (
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="add-subscription-btn"
+            >
+              + Add Subscription
+            </button>
+          )}
         </div>
       </header>
-      
-      <main className="dashboard-main">
-        <div className="welcome-card">
-          <h2>Welcome to SubScout! 🎉</h2>
-          <p>Start managing your subscriptions by adding your first one.</p>
-          <button className="add-subscription-btn">
-            Add Your First Subscription
-          </button>
-        </div>
-      </main>
+
+      {renderCurrentPage()}
+
+      {/* Add Subscription Modal */}
+      {showAddModal && (
+        <AddSubscriptionModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddSubscription}
+        />
+      )}
     </div>
   )
 }

@@ -20,6 +20,14 @@ export default function FallingLogos() {
     const friction = 0.98
     const bounce = 0.7
 
+    // Text collision area (tight around the actual text only)
+    const textArea = {
+      x: canvas.width * 0.25,  // Start closer to center
+      y: canvas.height * 0.45,
+      width: canvas.width * 0.5,  // Much narrower to match actual text
+      height: canvas.height * 0.1
+    }
+
     class Logo {
       constructor(img, delay = 0) {
         this.x = Math.random() * (canvas.width - 40)
@@ -88,6 +96,9 @@ export default function FallingLogos() {
           this.vy *= -bounce
           this.vy = Math.max(this.vy, 0) // Ensure downward velocity after hitting top
         }
+
+        // Text area collision
+        this.checkTextCollision(textArea)
 
         // Bottom collision - settle here
         if (this.y >= canvas.height - this.size) {
@@ -159,6 +170,56 @@ export default function FallingLogos() {
             this.settled = false
             other.settled = false
           }
+        }
+      }
+
+      // Check collision with text area
+      checkTextCollision(textArea) {
+        const logoLeft = this.x
+        const logoRight = this.x + this.size
+        const logoTop = this.y
+        const logoBottom = this.y + this.size
+
+        const textLeft = textArea.x
+        const textRight = textArea.x + textArea.width
+        const textTop = textArea.y
+        const textBottom = textArea.y + textArea.height
+
+        // Check if logo overlaps with text area
+        if (logoRight > textLeft && logoLeft < textRight && 
+            logoBottom > textTop && logoTop < textBottom) {
+          
+          // Calculate overlap amounts
+          const overlapLeft = logoRight - textLeft
+          const overlapRight = textRight - logoLeft
+          const overlapTop = logoBottom - textTop
+          const overlapBottom = textBottom - logoTop
+
+          // Find minimum overlap direction for precise collision
+          const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom)
+
+          // Position logo exactly at the boundary (no gaps)
+          if (minOverlap === overlapLeft) {
+            // Hit left side of text
+            this.x = textLeft - this.size
+            this.vx = -Math.abs(this.vx) * bounce
+          } else if (minOverlap === overlapRight) {
+            // Hit right side of text
+            this.x = textRight
+            this.vx = Math.abs(this.vx) * bounce
+          } else if (minOverlap === overlapTop) {
+            // Hit top of text
+            this.y = textTop - this.size
+            this.vy = -Math.abs(this.vy) * bounce
+          } else if (minOverlap === overlapBottom) {
+            // Hit bottom of text
+            this.y = textBottom
+            this.vy = Math.abs(this.vy) * bounce
+          }
+
+          // Add rotation from text collision
+          this.rotationSpeed += (Math.random() - 0.5) * 0.2
+          this.settled = false
         }
       }
 

@@ -1,0 +1,358 @@
+:root {
+  --bg-primary: #0f0f23;
+  --bg-secondary: #1a1a2e;
+}
+
+/* Overlay Animations */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 999;
+  transition: background-color 0.3s ease;
+  opacity: 0;
+}
+
+.sidebar-overlay.visible {
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 1;
+}
+
+.sidebar-overlay.closing {
+  background: rgba(0, 0, 0, 0);
+  opacity: 0;
+}
+
+/* Sidebar Base Styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 280px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 100vh; /* Ensure it doesn't exceed viewport height */
+}
+
+.sidebar.sidebar-overlay-mode {
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+}
+
+/* Sidebar Animation States */
+.sidebar.visible {
+  transform: translateX(0);
+}
+
+.sidebar.closing {
+  transform: translateX(-100%);
+}
+
+/* Header Animations */
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: 0;
+  transform: translateY(-20px);
+  animation: slideInDown 0.4s ease 0.1s forwards;
+}
+
+@keyframes slideInDown {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  font-size: 1.5rem;
+  animation: bounceIn 0.6s ease 0.2s both;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: slideInLeft 0.5s ease 0.3s forwards;
+}
+
+@keyframes slideInLeft {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.8);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.8);
+  animation: rotateIn 0.5s ease 0.4s forwards;
+  outline: none; /* Remove focus outline */
+}
+
+.sidebar-toggle-btn:focus {
+  outline: none; /* Ensure no focus outline */
+}
+
+@keyframes rotateIn {
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  transform: translateY(-1px) rotate(90deg);
+}
+
+/* Navigation Animations */
+.sidebar-nav {
+  flex: 1;
+  padding: 1rem 0;
+  overflow: hidden; /* Remove scrollbar */
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item-container {
+  margin-bottom: 0.5rem;
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: slideInStagger 0.4s ease forwards;
+  animation-delay: calc(0.5s + var(--item-index) * 0.1s);
+}
+
+@keyframes slideInStagger {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.nav-item {
+  width: 100%;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  outline: none; /* Remove focus outline */
+}
+
+.nav-item:focus {
+  outline: none; /* Ensure no focus outline */
+}
+
+.nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.nav-item:hover::before {
+  left: 100%;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  transform: translateX(5px);
+}
+
+.nav-item.active {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border-right: 3px solid #667eea;
+  transform: translateX(5px);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #667eea, #764ba2);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+  min-width: 24px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.nav-label {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+/* Footer Animations */
+.sidebar-footer {
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideInUp 0.4s ease 0.7s forwards;
+}
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sign-out {
+  color: rgba(239, 68, 68, 0.8) !important;
+  position: relative;
+}
+
+.sign-out::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.sign-out:hover::before {
+  left: 100%;
+}
+
+.sign-out:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #f87171 !important;
+  transform: translateX(5px);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Remove focus outlines globally for buttons */
+button:focus {
+  outline: none !important;
+}
+
+button:focus-visible {
+  outline: none !important;
+}
+
+/* Apply theme variables and hide scrollbars globally */
+body {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for webkit browsers */
+body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+html {
+  overflow-x: hidden; /* Hide horizontal scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for webkit browsers */
+html::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Loading animation for when sidebar is opening */
+.sidebar.visible .nav-item-container:nth-child(1) { animation-delay: 0.5s; }
+.sidebar.visible .nav-item-container:nth-child(2) { animation-delay: 0.6s; }
+.sidebar.visible .nav-item-container:nth-child(3) { animation-delay: 0.7s; }
+.sidebar.visible .nav-item-container:nth-child(4) { animation-delay: 0.8s; }

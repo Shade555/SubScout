@@ -133,6 +133,9 @@ export default function Auth() {
       </div>
 
       <div className="auth-right">
+        <div className="center-text">
+          Don't let subscriptions weigh you down
+        </div>
         <FallingLogos />
       </div>
     </div>

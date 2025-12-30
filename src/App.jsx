@@ -6,8 +6,6 @@ import './App.css'
 function App() {
   const { user, loading } = useAuth()
   
-  console.log('App component rendering', { user: user?.email, loading })
-  
   if (loading) {
     return (
       <div className="loading-container">
